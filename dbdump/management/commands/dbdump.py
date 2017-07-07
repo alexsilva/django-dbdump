@@ -131,6 +131,8 @@ class Command(BaseCommand):
             self.do_mysql_backup(outfile, raw_args=raw_args)
         elif 'postgresql' in self.engine:
             self.do_postgresql_backup(outfile, raw_args=raw_args)
+        elif 'sql_server' in self.engine:
+            self.do_sql_server_backup(outfile, raw_args=raw_args)
         else:
             raise CommandError('Backups of %s engine are not implemented.' % self.engine)
 
@@ -256,3 +258,40 @@ class Command(BaseCommand):
         if self.password:
             process.stdin.write('%s\n' % self.password)
             process.stdin.close()
+
+    def do_sql_server_backup(self, outfile, **kwargs):
+        """Backup of an entire SQL server database (Requires pyodbc)"""
+        import pyodbc
+
+        # Will only work if 'NAME' is a datasource
+        conn = r'DSN={0.db};SERVER={0.host};UID={0.user};PWD={0.password}'.format(self)
+
+        connection = pyodbc.connect(conn,
+                                    driver='{SQL Server Native Client 11.0}',
+                                    trusted_connection='yes',
+                                    autocommit=True
+                                    )
+        # The path must be absolute
+        outfile = os.path.abspath(outfile)
+        filename = os.path.basename(outfile)
+        ext = os.path.splitext(filename)[-1]
+
+        # The export only concatenates in the same file.
+        if os.path.exists(outfile):
+            filename += ("_" + time.strftime('%Y%m%d-%H%M%S'))
+
+        # The sql extension does not make sense here.
+        ext = '.bak' if ext == '.sql' else ext
+
+        filepath = os.path.join(os.path.dirname(outfile), filename + ext)
+
+        if self.debug:
+            print("exporting to '{}'".format(filepath))
+
+        query = "BACKUP DATABASE [{0.db}] TO DISK = '{1:s}';".format(self, filepath)
+
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+
+            while cursor.nextset():
+                time.sleep(0.1)
