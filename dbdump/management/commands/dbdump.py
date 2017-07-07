@@ -263,7 +263,7 @@ class Command(BaseCommand):
         """Backup of an entire SQL server database (Requires pyodbc)"""
         import pyodbc
 
-        # Will only work if 'NAME' is a datasource
+        # Connection string to the database.
         conn = r'DSN={0.db};SERVER={0.host};UID={0.user};PWD={0.password}'.format(self)
 
         connection = pyodbc.connect(conn,
