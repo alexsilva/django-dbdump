@@ -13,6 +13,10 @@ import subprocess
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
+# Lets you inform alternative locations
+MYSQL_DUMP_TOOL = getattr(settings, "MYSQL_DUMP_TOOL", "mysqldump")
+POSTGRE_DUMP_TOOL = getattr(settings, "POSTGRE_DUMP_TOOL", "pg_dump")
+
 
 class Command(BaseCommand):
     help = 'Dump database into a file. Only MySQL and PostgreSQL engines are supported.'
@@ -170,7 +174,7 @@ class Command(BaseCommand):
             excluded_args += ['--ignore-table=%s.%s' % (self.db, excluded_table)
                               for excluded_table in self.excluded_tables + self.empty_tables]
 
-        command = 'mysqldump %s' % (' '.join(excluded_args + [self.db]))
+        command = MYSQL_DUMP_TOOL + ' %s' % (' '.join(excluded_args + [self.db]))
 
         if outfile != self.output_stdout:
             command += " > %s" % outfile
@@ -181,7 +185,7 @@ class Command(BaseCommand):
             no_data_args = main_args[:] + ['--no-data', self.db]
             no_data_args += [empty_table for empty_table in self.empty_tables]
 
-            command = 'mysqldump %s' % (' '.join(no_data_args))
+            command = MYSQL_DUMP_TOOL + ' %s' % (' '.join(no_data_args))
 
             if outfile != self.output_stdout:
                 command += " >> %s" % outfile
@@ -221,7 +225,7 @@ class Command(BaseCommand):
             excluded_args += ['--exclude-table=%s' % excluded_table
                               for excluded_table in self.excluded_tables + self.empty_tables]
 
-        command = 'pg_dump %s %s' % (' '.join(excluded_args), self.db)
+        command = POSTGRE_DUMP_TOOL + ' %s %s' % (' '.join(excluded_args), self.db)
 
         if outfile != self.output_stdout:
             command += ' > %s' % outfile
@@ -233,7 +237,7 @@ class Command(BaseCommand):
             no_data_args += ['--table=%s' % empty_table for empty_table in self.empty_tables]
             no_data_args += [self.db]
 
-            command = 'pg_dump %s %s' % (' '.join(no_data_args), self.db)
+            command = POSTGRE_DUMP_TOOL + ' %s %s' % (' '.join(no_data_args), self.db)
 
             if outfile != self.output_stdout:
                 command += ' >> %s' % outfile
