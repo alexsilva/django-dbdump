@@ -36,5 +36,6 @@ setup(
     ],
     install_requires=[
         'Django>=1.8',
+        'pyodbc'
     ],
 )
