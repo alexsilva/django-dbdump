@@ -278,7 +278,7 @@ class Command(BaseCommand):
         # The path must be absolute
         outfile = os.path.abspath(outfile)
         filename = os.path.basename(outfile)
-        ext = os.path.splitext(filename)[-1]
+        filename, ext = os.path.splitext(filename)
 
         # The export only concatenates in the same file.
         if os.path.exists(outfile):
